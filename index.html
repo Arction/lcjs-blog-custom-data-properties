@@ -1,0 +1,143 @@
+<html>
+    <head>
+        <script src="http://unpkg.com/@arction/lcjs@3.1.0/dist/lcjs.iife.js"></script>
+        <style>
+            #github-link {
+                position: fixed;
+                display: block;
+                top: 0;
+                right: 0;
+                margin-left: auto;
+                z-index: 2;
+            }
+            #github-link-img {
+                display: block;
+                margin: 10px 10px 10px auto;
+            }
+        </style>
+    </head>
+    <body>
+        <a id="github-link" href="https://github.com/Arction/lcjs-blog-custom-data-properties">
+            <img id="github-link-img" src="GitHub-Mark-Light-32px.png" />
+        </a>
+        <script>
+            const {
+                lightningChart,
+                AutoCursorModes,
+                PointShape,
+                UIElementBuilders,
+                UIBackgrounds,
+                UIOrigins,
+                SolidFill,
+                ColorRGBA
+            } = lcjs
+
+            const chart = lightningChart().ChartXY({
+                disableAnimations: true,
+            })
+                .setAutoCursorMode(AutoCursorModes.disabled)
+                .setTitle('Custom data properties example')
+
+            const axisX = chart.getDefaultAxisX().setInterval(-10, 110, false, true)
+
+            const axisY = chart.getDefaultAxisY().setInterval(-10, 110, false, true)
+
+            const scatter = chart
+                .addPointSeries({
+                    pointShape: PointShape.Circle,
+                })
+                .setPointSize(10)
+
+            const randomString = (() => {
+                const alphabet = [
+                    'a',
+                    'b',
+                    'c',
+                    'd',
+                    'e',
+                    'f',
+                    'g',
+                    'h',
+                    'i',
+                    'j',
+                    'k',
+                    'l',
+                    'm',
+                    'n',
+                    'o',
+                    'p',
+                    'q',
+                    'r',
+                    's',
+                    't',
+                    'u',
+                    'v',
+                    'w',
+                    'x',
+                    'y',
+                    'z',
+                ]
+                const randomAlphabetIndexes = new Array(793).fill(0).map((_) => Math.round(Math.random() * (alphabet.length - 1)))
+                let iRandom = 0
+                const randomStr = () => {
+                    let str = ''
+                    for (let i = 0; i < 5; i += 1) {
+                        str += alphabet[randomAlphabetIndexes[iRandom]]
+                        iRandom = (iRandom + 1) % randomAlphabetIndexes.length
+                    }
+                    return str
+                }
+                return randomStr
+            })()
+
+            const fillTransparent = new SolidFill({
+                color: ColorRGBA(255, 255, 255, 50),
+            })
+            const fillSolid = new SolidFill({
+                color: ColorRGBA(255, 255, 255, 255),
+            })
+
+            const data = new Array(50).fill(0).map((_, i) => {
+                const x = Math.random() * 100
+                const y = Math.random() * 100
+                const label = chart
+                    .addUIElement(UIElementBuilders.TextBox.setBackground(UIBackgrounds.None), {
+                        x: chart.getDefaultAxisX(),
+                        y: chart.getDefaultAxisY(),
+                    })
+                    .setText(randomString())
+                    .setTextFillStyle(fillTransparent)
+                    .setOrigin(UIOrigins.CenterBottom)
+                    .setMargin({ bottom: 6 })
+                    .setMouseInteractions(false)
+                    .setPosition({ x, y })
+                return {
+                    x,
+                    y,
+                    label,
+                }
+            })
+            scatter.add(data)
+
+            let pointedDataPoint
+            chart.onSeriesBackgroundMouseMove((_, event) => {
+                const nearestDataPoint = scatter.solveNearestFromScreen(chart.engine.clientLocation2Engine(event.clientX, event.clientY))?.location
+                if (pointedDataPoint && pointedDataPoint !== nearestDataPoint) {
+                    pointedDataPoint.label.setTextFillStyle(fillTransparent)
+                    pointedDataPoint = undefined
+                }
+                if (nearestDataPoint) {
+                    pointedDataPoint = nearestDataPoint
+                    pointedDataPoint.label.setTextFillStyle(fillSolid)
+                }
+            })
+            chart.onSeriesBackgroundMouseLeave((_, event) => {
+                if (pointedDataPoint) {
+                    pointedDataPoint.label.setTextFillStyle(fillTransparent)
+                    pointedDataPoint = undefined
+                }
+            })
+
+        </script>
+    </body>
+</html>
